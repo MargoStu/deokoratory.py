@@ -1,0 +1,152 @@
+# dekoratory
+
+class Manager:
+    def __init__(self):
+        self.konto = 0
+        self.magazyn = {
+            "rower": {"cena": 1000, "ilosc": 2},
+            "hulajnoga": {"cena": 500, "ilosc": 3},
+            "rolki": {"cena": 300, "ilosc": 5}
+        }
+        self.historia = []
+        self.komendy = {}
+
+    def assign(self, nazwa, funkcja):
+        self.komendy[nazwa] = funkcja
+
+    def execute(self, nazwa):
+        if nazwa in self.komendy:
+            self.komendy[nazwa]()
+        else:
+            print("Nieznana komenda.")
+
+    def komenda_saldo(self):
+        kwota = input("Podaj kwotę (może być ujemna): ")
+        if kwota.startswith("-") and kwota[1:].isdigit():
+            self.konto += int(kwota)
+            self.historia.append("saldo " + kwota)
+        elif kwota.isdigit():
+            self.konto += int(kwota)
+            self.historia.append("saldo " + kwota)
+        else:
+            print("Błąd: Podano nieprawidłową wartość.")
+
+    def komenda_sprzedaz(self):
+        produkt = input("Nazwa produktu: ")
+        cena = input("Cena sprzedaży: ")
+        ilosc = input("Liczba sztuk: ")
+
+        if cena.isdigit() and ilosc.isdigit():
+            cena = int(cena)
+            ilosc = int(ilosc)
+
+            if produkt in self.magazyn and self.magazyn[produkt]["ilosc"] >= ilosc:
+                self.magazyn[produkt]["ilosc"] -= ilosc
+                self.konto += cena * ilosc
+                self.historia.append(f"sprzedaż {produkt} {cena} {ilosc}")
+                print(f"Sprzedano {ilosc} szt. produktu {produkt} za {cena * ilosc} zł.")
+            else:
+                print("Błąd: Produkt nie istnieje lub za mała ilość.")
+        else:
+            print("Błąd: Cena i ilość muszą być liczbami.")
+
+    def komenda_zakup(self):
+        produkt = input("Nazwa produktu: ")
+        cena = input("Cena zakupu: ")
+        ilosc = input("Liczba sztuk: ")
+
+        if cena.isdigit() and ilosc.isdigit():
+            cena = int(cena)
+            ilosc = int(ilosc)
+            koszt = cena * ilosc
+
+            if self.konto >= koszt:
+                self.konto -= koszt
+                if produkt in self.magazyn:
+                    self.magazyn[produkt]["ilosc"] += ilosc
+                    self.magazyn[produkt]["cena"] = cena
+                else:
+                    self.magazyn[produkt] = {"cena": cena, "ilosc": ilosc}
+                self.historia.append(f"zakup {produkt} {cena} {ilosc}")
+                print(f"Zakupiono {ilosc} szt. produktu {produkt} za {koszt} zł.")
+            else:
+                print("Błąd: Niewystarczające środki na koncie.")
+        else:
+            print("Błąd: Cena i ilość muszą być liczbami całkowitymi.")
+
+    def komenda_konto(self):
+        print(f"Aktualne saldo konta: {self.konto} zł.")
+
+    def komenda_lista(self):
+        print("Stan magazynu:")
+        if not self.magazyn:
+            print("Magazyn jest pusty.")
+        else:
+            for produkt, dane in self.magazyn.items():
+                print(f"{produkt}: {dane['ilosc']} szt. po {dane['cena']} zł")
+
+    def komenda_magazyn(self):
+        produkt = input("Podaj nazwę produktu: ")
+        if produkt in self.magazyn:
+            dane = self.magazyn[produkt]
+            print(f"{produkt}: {dane['ilosc']} szt. po {dane['cena']} zł")
+        else:
+            print("Produkt nie istnieje w magazynie.")
+
+    def komenda_przeglad(self):
+        od = input("Podaj indeks początkowy (Enter = od początku): ")
+        do = input("Podaj indeks końcowy (Enter = do końca): ")
+
+        if od == "":
+            od_index = 0
+        elif od.isdigit():
+            od_index = int(od)
+        else:
+            print("Błąd: Nieprawidłowy indeks początkowy.")
+            return
+
+        if do == "":
+            do_index = len(self.historia)
+        elif do.isdigit():
+            do_index = int(do)
+        else:
+            print("Błąd: Nieprawidłowy indeks końcowy.")
+            return
+
+        if od_index < 0 or do_index > len(self.historia) or od_index > do_index:
+            print("Błąd zakresu. Liczba operacji:", len(self.historia))
+        else:
+            for i in range(od_index, do_index):
+                print(f"{i}: {self.historia[i]}")
+
+    def uruchom(self):
+        print("""
+Dostępne komendy:
+  saldo      (Zmień stan konta)
+  sprzedaż   (Sprzedaj produkt z magazynu)
+  zakup      (Kup produkt do magazynu)
+  konto      (Pokaż stan konta)
+  lista      (Pokaż stan całego magazynu)
+  magazyn    (Pokaż stan konkretnego produktu)
+  przegląd   (Przegląd operacji)
+  koniec     (Zakończ program)
+""")
+
+        while True:
+            komenda = input("\nPodaj komendę: ")
+            if komenda == "koniec":
+                print("Zamykanie programu.")
+                break
+            else:
+                self.execute(komenda)
+                
+if __name__ == "__main__":
+    manager = Manager()
+    manager.assign("saldo", manager.komenda_saldo)
+    manager.assign("sprzedaż", manager.komenda_sprzedaz)
+    manager.assign("zakup", manager.komenda_zakup)
+    manager.assign("konto", manager.komenda_konto)
+    manager.assign("lista", manager.komenda_lista)
+    manager.assign("magazyn", manager.komenda_magazyn)
+    manager.assign("przegląd", manager.komenda_przeglad)
+    manager.uruchom()
